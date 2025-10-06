@@ -112,9 +112,5 @@ Production tip:
 - Pin/compare selected states
 - Print/PDF export of current view
 
-## License
-
-MIT — see LICENSE (or choose a license suitable for your project).
-
 ---
 Built with Leaflet, OpenStreetMap tiles, and CollectAPI.

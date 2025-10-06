@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>US Gas Prices — Interactive Map</title>
+
+    <!-- Leaflet -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="app-header">
+        <div class="brand">
+          <div class="dot" aria-hidden="true"></div>
+          <h1>US Gas Prices</h1>
+        </div>
+        <p class="subtitle">State averages — powered by CollectAPI</p>
+      </header>
+
+      <section class="controls" aria-label="Map controls">
+        <div class="control-card">
+          <label for="fuelType">Fuel type</label>
+          <select id="fuelType" aria-label="Select fuel type">
+            <option value="regular" selected>Gasoline Regular</option>
+            <option value="midgrade">Gasoline Midgrade</option>
+            <option value="premium">Gasoline Premium</option>
+            <option value="diesel">Diesel</option>
+          </select>
+        </div>
+
+        <div class="control-card">
+          <label for="unitSelect">Units</label>
+          <select id="unitSelect" aria-label="Select unit">
+            <option value="gal" selected>USD / gallon</option>
+            <option value="L">USD / liter</option>
+          </select>
+        </div>
+
+        <div class="control-card">
+          <label for="scaleSelect">Color scale</label>
+          <select id="scaleSelect" aria-label="Select color scale">
+            <option value="continuous" selected>Continuous</option>
+            <option value="quantiles">Quantiles (5)</option>
+          </select>
+        </div>
+
+        <div class="control-card">
+          <label>Highlight Top N</label>
+          <div class="inline">
+            <select id="highlightMode" aria-label="Highlight mode">
+              <option value="none" selected>None</option>
+              <option value="cheapest">Cheapest</option>
+              <option value="expensive">Most expensive</option>
+            </select>
+            <input id="highlightCount" type="number" min="1" max="25" value="5" aria-label="Highlight count"/>
+          </div>
+        </div>
+
+        <div class="control-card">
+          <label for="searchState">Search state</label>
+          <input id="searchState" list="stateList" placeholder="Type a state name…" />
+          <datalist id="stateList"></datalist>
+          <div class="inline">
+            <button id="btnSearch">Go</button>
+            <button id="btnResetView">Reset view</button>
+          </div>
+        </div>
+
+        <div class="control-card">
+          <label>Refresh</label>
+          <div class="inline">
+            <button id="btnRefresh">Fetch now</button>
+            <label class="checkbox">
+              <input type="checkbox" id="autoRefreshChk" />
+              Auto
+            </label>
+            <input id="refreshMinutes" type="number" min="10" max="180" value="30" title="Minutes" />
+            <span class="suffix">min</span>
+          </div>
+          <div id="lastUpdated" class="muted small"></div>
+        </div>
+
+        <div class="control-card">
+          <label>Export</label>
+          <div class="inline">
+            <button id="btnExportJSON">JSON</button>
+            <button id="btnExportCSV">CSV</button>
+          </div>
+        </div>
+
+        <div class="legend control-card" id="legend" aria-live="polite">
+          <div class="legend-title">Legend (<span id="legendUnit">USD/gal</span>)</div>
+          <div class="legend-scale" id="legendScale"></div>
+        </div>
+
+        <div class="control-card">
+          <label for="apiKeyInput">CollectAPI Key</label>
+          <input id="apiKeyInput" type="password" placeholder="Paste your apikey…" />
+          <div class="inline">
+            <button id="btnSaveKey">Save</button>
+            <button id="btnClearKey" class="secondary">Clear</button>
+          </div>
+          <div class="muted small">Stored locally in your browser (localStorage).</div>
+        </div>
+
+        <div class="note control-card">
+          Sources: CollectAPI (prices), OpenStreetMap + Leaflet (map).
+        </div>
+      </section>
+
+      <section class="content">
+        <div id="map" role="region" aria-label="US gas price map"></div>
+
+        <aside class="sidebar" aria-label="Details and rankings">
+          <section class="summary">
+            <div class="summary-card">
+              <div class="label">Lowest</div>
+              <div class="value" id="statMin">—</div>
+              <div class="muted small" id="statMinStates">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="label">Average</div>
+              <div class="value" id="statAvg">—</div>
+              <div class="muted small" id="statCount">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="label">Highest</div>
+              <div class="value" id="statMax">—</div>
+              <div class="muted small" id="statMaxStates">—</div>
+            </div>
+          </section>
+
+          <section class="table-controls">
+            <input id="tableFilter" placeholder="Filter states…" />
+            <div class="muted small">Click table headers to sort.</div>
+          </section>
+
+          <section class="table-wrap">
+            <table id="stateTable">
+              <thead>
+                <tr>
+                  <th data-sort="state">State</th>
+                  <th data-sort="regular">Regular</th>
+                  <th data-sort="midgrade">Midgrade</th>
+                  <th data-sort="premium">Premium</th>
+                  <th data-sort="diesel">Diesel</th>
+                  <th data-sort="delta">Δ vs avg</th>
+                  <th data-sort="rank">Rank</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </section>
+        </aside>
+      </section>
+
+      <footer class="app-footer">
+        Made with ♥. Use your own CollectAPI key. If CORS blocks requests, run a local server or a tiny proxy to attach the Authorization header.
+        Shareable link: settings are encoded in the URL hash.
+      </footer>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="./script.js" defer></script>
+  </body>
+</html>

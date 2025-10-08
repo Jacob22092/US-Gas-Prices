@@ -55,7 +55,7 @@ Production tip:
 - Do not expose your key client-side. Use a tiny proxy (serverless function) that attaches the Authorization header and returns the API response to the browser.
 
 ## Configuration and controls
-
+ 
 - Fuel type: Regular, Midgrade, Premium, Diesel.
 - Units: USD/gal or USD/L (conversion: 1 gal = 3.785411784 L).
 - Color scale: Continuous or Quantiles(5).

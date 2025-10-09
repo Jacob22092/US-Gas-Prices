@@ -1,4 +1,4 @@
-# US Gas Prices — Interactive Map
+# US Gas Prices — Interactive Map 
 
 A modern, responsive web app that visualizes average gas prices across US states on an interactive choropleth map. It uses Leaflet with OpenStreetMap tiles and the CollectAPI gasPrice/allUsaPrice endpoint. The UI includes analytics, rankings, export, search, and more.
 
